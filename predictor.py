@@ -1,2 +1,0 @@
-#### predictor.py ####
-import autocomplete

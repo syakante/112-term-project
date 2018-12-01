@@ -1,7 +1,8 @@
-#### analyzeSentence.py ####
+#### analyzeText.py ####
 #this python file contains all the not-really-computational-linguistics garbage for annotating a given essay prompt.
 
 import csv
+from collections import Counter
 
 articles = {"the","a"}
 
@@ -24,6 +25,7 @@ with open('wordlist.csv',newline="") as CSVfile:
         else:
             ingVerbs.add(infinitiveVerb+"ing")
     essayVerbs = essayVerbs | ingVerbs
+    commonWords = set(file[2])
 
 ## example prompts just for testing with ##
 ex1 = "Evaluate the relative importance of different causes for the expanding role of the United States in the world in the period from 1865 to 1910."
@@ -35,7 +37,7 @@ ex3 = "Write a well-developed essay analyzing the complex nature of the gift and
 ex4 = "The lessons we take from obstacles we encounter can be fundamental to later success. Recount a time when you faced a challenge, setback, or failure. How did it affect you, and what did you learn from the experience?"
 
 
-#### actual code yeet ####
+#### short ####
 
 def divideToSentences(prompt):
     #This helper function converts a string input into a list of list of words, where each upper-level list item is a sentence or sentence equivalent.
@@ -44,7 +46,7 @@ def divideToSentences(prompt):
     #because of .split, the very last sentence won't have a period at the end, but since it's the last sentence we can safely assume that there's supposed to be a period.
     result = []
     for sentenceString in sentences:
-        sentenceString = sentenceString.strip()
+        sentenceString = sentenceString.strip() 
         sentenceString = list(sentenceString.split(" "))
         if sentenceString != [""]:
             result.append(sentenceString)
@@ -109,3 +111,26 @@ def analyzePrompt(prompt):
         promptEssayVerbs = promptEssayVerbs | getEssayVerbs(sentence)
         promptQuestions.extend(getQuestions(sentence))
     return None
+
+#### long ####
+
+def getKeywordLarge(corpus):
+    #given a big string, find important terms
+    
+    #Important terms are scored based on repetition
+    #some words will be used but are not important, they will be blacklisted.
+    #Such words include prepositions, articles, conjunctions, parts of speech kind of thing
+    blacklist = prepositions | articles | conjunctions | commonWords | questionWords
+    
+    text = corpus.lower().split(" ")
+    numWords = len(corpus)
+    freq = Counter(x for x in text if x not in blacklist)
+
+    minSize = min(10, len(freq))  # get first 10
+    keywords = {x: y for x, y in freq.most_common(minSize)}  # recreate a dict
+
+    for k in keywords:
+        articleScore = keywords[k]*1.0 / numWords
+        keywords[k] = articleScore * 1.5 + 1
+
+    return keywords
